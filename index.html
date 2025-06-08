@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe met AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+    }
+    h1 {
+      font-size: 2em;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      margin: 20px auto;
+      width: 310px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      font-size: 2em;
+      background-color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .cell:hover {
+      background-color: #ddd;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    button {
+      margin-top: 15px;
+      padding: 8px 16px;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tic Tac Toe tegen AI</h1>
+  <div id="board"></div>
+  <div id="message"></div>
+  <button onclick="startGame()">Opnieuw Spelen</button>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const messageEl = document.getElementById("message");
+    let board = Array(9).fill(null);
+    let human = "X";
+    let ai = "O";
+    let gameOver = false;
+
+    function startGame() {
+      board = Array(9).fill(null);
+      gameOver = false;
+      messageEl.textContent = "";
+      drawBoard();
+    }
+
+    function drawBoard() {
+      boardEl.innerHTML = "";
+      board.forEach((cell, index) => {
+        const cellEl = document.createElement("div");
+        cellEl.className = "cell";
+        cellEl.textContent = cell || "";
+        cellEl.onclick = () => handleMove(index);
+        boardEl.appendChild(cellEl);
+      });
+    }
+
+    function handleMove(index) {
+      if (board[index] || gameOver) return;
+      board[index] = human;
+      drawBoard();
+
+      if (checkWin(human)) {
+        endGame("Jij wint!");
+        return;
+      } else if (board.every(cell => cell)) {
+        endGame("Gelijkspel!");
+        return;
+      }
+
+      const bestMove = getBestMove();
+      board[bestMove] = ai;
+      drawBoard();
+
+      if (checkWin(ai)) {
+        endGame("AI wint!");
+      } else if (board.every(cell => cell)) {
+        endGame("Gelijkspel!");
+      }
+    }
+
+    function endGame(msg) {
+      gameOver = true;
+      messageEl.textContent = msg;
+    }
+
+    function checkWin(player) {
+      const winCombos = [
+        [0,1,2],[3,4,5],[6,7,8], // rows
+        [0,3,6],[1,4,7],[2,5,8], // cols
+        [0,4,8],[2,4,6]          // diagonals
+      ];
+      return winCombos.some(combo => 
+        combo.every(i => board[i] === player)
+      );
+    }
+
+    function getBestMove() {
+      let bestScore = -Infinity;
+      let move;
+      for (let i = 0; i < board.length; i++) {
+        if (!board[i]) {
+          board[i] = ai;
+          let score = minimax(board, 0, false);
+          board[i] = null;
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      }
+      return move;
+    }
+
+    function minimax(newBoard, depth, isMaximizing) {
+      if (checkWin(ai)) return 10 - depth;
+      if (checkWin(human)) return depth - 10;
+      if (newBoard.every(cell => cell)) return 0;
+
+      if (isMaximizing) {
+        let best = -Infinity;
+        for (let i = 0; i < newBoard.length; i++) {
+          if (!newBoard[i]) {
+            newBoard[i] = ai;
+            let score = minimax(newBoard, depth + 1, false);
+            newBoard[i] = null;
+            best = Math.max(best, score);
+          }
+        }
+        return best;
+      } else {
+        let best = Infinity;
+        for (let i = 0; i < newBoard.length; i++) {
+          if (!newBoard[i]) {
+            newBoard[i] = human;
+            let score = minimax(newBoard, depth + 1, true);
+            newBoard[i] = null;
+            best = Math.min(best, score);
+          }
+        }
+        return best;
+      }
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
